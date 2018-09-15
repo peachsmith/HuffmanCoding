@@ -485,6 +485,9 @@ hc_sym* hc_read_table(FILE *in_stream, size_t *len)
 		{
 			sym.code = hc_create_bitstring();
 
+			/* dispose of this since we create it later */
+			free(sym.code->bytes);
+
 			flag = fread(&ul, sizeof(hc_ulong), 1, in_stream);
 			sym.code->bit_count = ul;
 
@@ -546,6 +549,38 @@ void hc_write_data(FILE *out_stream, hc_bitstring *bs)
 	}
 
 	fwrite(&data_end, sizeof(hc_byte), 1, out_stream);
+}
+
+hc_bitstring* hc_read_data(FILE* in_stream)
+{
+	hc_bitstring* bs = hc_create_bitstring();
+
+	/* dispose of this since we create it later */
+	free(bs->bytes);
+
+	hc_ulong ul;
+	hc_byte b;
+	size_t flag = 1;
+
+	flag = fread(&b, sizeof(hc_byte), 1, in_stream);
+
+	if (b == data_begin)
+	{
+		fread(&ul, sizeof(hc_ulong), 1, in_stream);
+		bs->bit_count = ul;
+
+		fread(&ul, sizeof(hc_ulong), 1, in_stream);
+		bs->byte_count = ul;
+
+		fread(&b, sizeof(hc_byte), 1, in_stream);
+		bs->current_bits = b;
+
+		bs->bytes = (hc_byte*)malloc(sizeof(hc_byte) * bs->byte_count);
+
+		flag = fread(bs->bytes, sizeof(hc_byte), bs->byte_count, in_stream);
+	}
+
+	return bs;
 }
 
 static void hc_build_branch(hc_node** node, hc_byte* bytes, hc_sym data,

@@ -210,6 +210,17 @@ hc_sym* hc_read_table(FILE*, size_t*);
 void hc_write_data(FILE*, hc_bitstring*);
 
 /**
+ * Reads a bit string containing encoded data frp, a file
+ *
+ * Params:
+ *   FILE - the output file
+ *
+ * Returns:
+ *   hc_bitstring - a new bit string containing encoded data
+ */
+hc_bitstring* hc_read_data(FILE*);
+
+/**
  * Reconstructs a Huffman tree from a bit code dictionary
  *
  * Params:

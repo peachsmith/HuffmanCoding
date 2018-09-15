@@ -169,9 +169,6 @@ int main(int argc, char** argv)
 		printf("[%4d] code: ", new_table[i].b);
 		hc_print_bitstring(new_table[i].code);
 		printf("\n");
-
-		/* destroy the bit code here until we reconstruct the tree */
-		/* hc_destroy_bitstring(new_table[i].code); */
 	}
 
 	hc_node_list* new_tree = hc_reconstruct_tree(new_table, unique);
@@ -182,6 +179,14 @@ int main(int argc, char** argv)
 		hc_destroy_list(new_tree);
 	}
 
+	hc_bitstring* new_data = hc_read_data(input);
+
+	hc_print_bitstring(new_data);
+	printf("\n");
+
+	hc_destroy_bitstring(new_data);
+
+	fclose(input);
 	free(table);
 	hc_destroy_list(tree);
 
