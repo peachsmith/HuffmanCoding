@@ -437,8 +437,8 @@ hc_sym* hc_read_table(FILE* input)
 
 	hc_sym* table = (hc_sym*)malloc(sizeof(hc_sym) * cap);
 
-	hc_ulong ul; /* long   */
-	hc_byte b; /* byte   */
+	hc_ulong ul; /* long */
+	hc_byte b;   /* byte */
 
 	fread(&b, sizeof(hc_byte), 1, input);
 

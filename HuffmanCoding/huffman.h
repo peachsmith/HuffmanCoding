@@ -12,9 +12,9 @@ typedef struct hc_bitstring hc_bitstring;
 
 struct hc_sym {
 	hc_byte b;          /* byte       */
-	hc_ulong f;          /* frequency  */
-	hc_ulong w;          /* weight     */
-	hc_ulong n;          /* tree depth */
+	hc_ulong f;         /* frequency  */
+	hc_ulong w;         /* weight     */
+	hc_ulong n;         /* tree depth */
 	hc_bitstring* code; /* bit code   */
 };
 
