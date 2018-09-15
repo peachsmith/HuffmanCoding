@@ -48,11 +48,11 @@ struct hc_bitstring {
 hc_node_list* hc_create_list();
 
 /**
-* Frees the resources allocated for an hc_node
-*
-* Params:
-*   hc_node - a reference to the node to destroy
-*/
+ * Frees the resources allocated for an hc_node
+ *
+ * Params:
+ *   hc_node - a reference to the node to destroy
+ */
 void hc_destroy_node(hc_node*);
 
 /**
@@ -81,11 +81,11 @@ void hc_add_node(hc_node_list*, hc_node*);
 void hc_sort_leaves(hc_node_list*);
 
 /**
-* Constructs a binary tree from a list of hc_nodes.
-*
-* Params:
-*   hc_node_list - a reference to a list of hc_nodes
-*/
+ * Constructs a binary tree from a list of hc_nodes.
+ *
+ * Params:
+ *   hc_node_list - a reference to a list of hc_nodes
+ */
 void hc_build_tree(hc_node_list*);
 
 /**
@@ -102,11 +102,11 @@ void hc_assign_codes(hc_node_list*);
 void hc_print_list(hc_node_list*);
 
 /**
-* Prints the contents of a tree of hc_nodes to standard output.
-*
-* Params:
-*   hc_node_list - a reference to the tree to print
-*/
+ * Prints the contents of a tree of hc_nodes to standard output.
+ *
+ * Params:
+ *   hc_node_list - a reference to the tree to print
+ */
 void hc_print_tree(hc_node_list*);
 
 /**
@@ -144,11 +144,11 @@ void hc_add_bit(hc_bitstring*, unsigned int);
 void hc_add_bits(hc_bitstring*, hc_bitstring*);
 
 /**
-* Removes the last bit from a bit string
-*
-* Params:
-*   hc_bitstring - the bit string whose last bit will be removed
-*/
+ * Removes the last bit from a bit string
+ *
+ * Params:
+ *   hc_bitstring - the bit string whose last bit will be removed
+ */
 void hc_remove_bit(hc_bitstring*);
 
 /**
