@@ -86,6 +86,7 @@ int main(int argc, char** argv)
 
 	/* assing bit codes to the leaves of the tree */
 	hc_assign_codes(tree);
+	hc_print_tree(tree);
 
 	/* populate the bit code dictionary */
 	table = (hc_sym*)malloc(sizeof(hc_sym) * unique);
@@ -126,7 +127,6 @@ int main(int argc, char** argv)
 	{
 		hc_print_bitstring(output);
 		printf("\n");
-		hc_destroy_bitstring(output);
 	}
 
 	FILE* out_file = fopen("out.huff", "wb");
@@ -142,6 +142,11 @@ int main(int argc, char** argv)
 	/* write the bit code dictionary to a file */
 	hc_write_table(out_file, table, unique);
 
+	/* write the data to a file */
+	hc_write_data(out_file, output);
+
+	hc_destroy_bitstring(output);
+
 	fclose(out_file);
 
 	input = fopen("out.huff", "rb");
@@ -155,17 +160,26 @@ int main(int argc, char** argv)
 	}
 
 	/* read the bit code dictionary from a file */
-	hc_sym* new_table = hc_read_table(input);
+	size_t len;
+	hc_sym* new_table = hc_read_table(input, &len);
 
 	/* print the bit code table */
-	for (i = 0; i < unique; i++)
+	for (i = 0; i < (hc_ulong)len; i++)
 	{
 		printf("[%4d] code: ", new_table[i].b);
 		hc_print_bitstring(new_table[i].code);
 		printf("\n");
 
 		/* destroy the bit code here until we reconstruct the tree */
-		hc_destroy_bitstring(new_table[i].code);
+		/* hc_destroy_bitstring(new_table[i].code); */
+	}
+
+	hc_node_list* new_tree = hc_reconstruct_tree(new_table, unique);
+
+	if (new_tree != NULL)
+	{
+		hc_print_tree(new_tree);
+		hc_destroy_list(new_tree);
 	}
 
 	free(table);

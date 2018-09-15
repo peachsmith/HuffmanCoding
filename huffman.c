@@ -2,6 +2,22 @@
 
 #include <stdlib.h>
 
+hc_node* hc_create_node()
+{
+	hc_node* node = (hc_node*)malloc(sizeof(hc_node));
+	node->leaf_1 = NULL;
+	node->leaf_2 = NULL;
+	node->next = NULL;
+	node->prev = NULL;
+	node->sym.code = NULL;
+	node->sym.b = 0;
+	node->sym.f = 0;
+	node->sym.w = 0;
+	node->sym.n = 0;
+
+	return node;
+}
+
 hc_node_list* hc_create_list()
 {
 	hc_node_list* list = (hc_node_list*)malloc(sizeof(hc_node_list));
@@ -399,6 +415,8 @@ static hc_byte table_begin = 1;
 static hc_byte table_byte = 2;
 static hc_byte table_code = 3;
 static hc_byte table_end = 4;
+static hc_byte data_begin = 5;
+static hc_byte data_end = 6;
 
 void hc_write_table(FILE* out_file, hc_sym* table, hc_ulong len)
 {
@@ -429,7 +447,7 @@ void hc_write_table(FILE* out_file, hc_sym* table, hc_ulong len)
 	fwrite(&table_end, 1, 1, out_file);
 }
 
-hc_sym* hc_read_table(FILE* input)
+hc_sym* hc_read_table(FILE *in_stream, size_t *len)
 {
 	size_t cap = 10;
 	size_t count = 0;
@@ -440,7 +458,7 @@ hc_sym* hc_read_table(FILE* input)
 	hc_ulong ul; /* long */
 	hc_byte b;   /* byte */
 
-	fread(&b, sizeof(hc_byte), 1, input);
+	fread(&b, sizeof(hc_byte), 1, in_stream);
 
 	if (b != table_begin)
 	{
@@ -452,11 +470,11 @@ hc_sym* hc_read_table(FILE* input)
 
 	while (flag == 1)
 	{
-		flag = fread(&b, sizeof(hc_byte), 1, input);
+		flag = fread(&b, sizeof(hc_byte), 1, in_stream);
 
 		if (b == table_byte)
 		{
-			flag = fread(&b, sizeof(hc_byte), 1, input);
+			flag = fread(&b, sizeof(hc_byte), 1, in_stream);
 			if (b == 101)
 			{
 				int x = 0;
@@ -467,17 +485,20 @@ hc_sym* hc_read_table(FILE* input)
 		{
 			sym.code = hc_create_bitstring();
 
-			flag = fread(&ul, sizeof(hc_ulong), 1, input);
+			flag = fread(&ul, sizeof(hc_ulong), 1, in_stream);
 			sym.code->bit_count = ul;
 
-			flag = fread(&ul, sizeof(hc_ulong), 1, input);
+			flag = fread(&ul, sizeof(hc_ulong), 1, in_stream);
 			sym.code->byte_count = ul;
 
-			flag = fread(&b, sizeof(hc_byte), 1, input);
+			flag = fread(&b, sizeof(hc_byte), 1, in_stream);
 			sym.code->current_bits = b;
 
-			sym.code->bytes = (hc_byte*)malloc(sizeof(hc_byte) * sym.code->byte_count);
-			flag = fread(sym.code->bytes, sizeof(hc_byte), sym.code->byte_count, input);
+			sym.code->bytes = (hc_byte*)
+				malloc(sizeof(hc_byte) * sym.code->byte_count);
+
+			flag = fread(sym.code->bytes, sizeof(hc_byte),
+				sym.code->byte_count, in_stream);
 
 			/* resize the dictionary if necessary */
 			if (count >= cap)
@@ -502,5 +523,95 @@ hc_sym* hc_read_table(FILE* input)
 		table = (hc_sym*)realloc(table, sizeof(hc_sym) * count);
 	}
 
+	*len = count;
+
 	return table;
+}
+
+void hc_write_data(FILE *out_stream, hc_bitstring *bs)
+{
+	hc_ulong i;
+
+	fwrite(&data_begin, sizeof(hc_byte), 1, out_stream);
+
+	/* write the bit string metadata */
+	fwrite(&(bs->bit_count), sizeof(hc_ulong), 1, out_stream);
+	fwrite(&(bs->byte_count), sizeof(hc_ulong), 1, out_stream);
+	fwrite(&(bs->current_bits), sizeof(hc_byte), 1, out_stream);
+
+	/* write the bit code data */
+	for (i = 0; i < bs->byte_count; i++)
+	{
+		fwrite(&(bs->bytes[i]), sizeof(hc_byte), 1, out_stream);
+	}
+
+	fwrite(&data_end, sizeof(hc_byte), 1, out_stream);
+}
+
+static void hc_build_branch(hc_node** node, hc_byte* bytes, hc_sym data,
+	hc_byte byte, hc_ulong bit, hc_ulong bit_count, hc_ulong bit_cap)
+{
+	if (bit_count == bit_cap)
+	{
+		if (*node == NULL)
+		{
+			*node = hc_create_node();
+		}
+
+		(*node)->sym = data;
+		(*node)->sym.w = 0;
+
+		return;
+	}
+
+	if (bit == CHAR_BIT)
+	{
+		byte++;
+		bit = 0;
+	}
+
+	hc_node** leaf;
+
+	if (bytes[byte] & (1 << bit++))
+		leaf = &((*node)->leaf_1);
+	else
+		leaf = &((*node)->leaf_2);
+
+	if (*leaf == NULL)
+	{
+		*leaf = hc_create_node();
+		(*leaf)->sym.w = 1;
+	}
+
+	hc_build_branch(leaf, bytes, data, byte, bit, ++bit_count, bit_cap);
+}
+
+hc_node_list* hc_reconstruct_tree(hc_sym* table, hc_ulong len)
+{
+	hc_ulong i;
+	hc_node_list* tree = hc_create_list();
+
+	hc_node* root = hc_create_node();
+	root->sym.w = 1;
+
+	hc_add_node(tree, root);
+
+	/*
+	 * leaf_1 => 1
+	 * leaf_2 => 0
+	 */
+
+	for (i = 0; i < len; i++)
+	{
+		hc_bitstring* bs = table[i].code;
+
+		hc_build_branch(&root, bs->bytes, table[i],
+			0,            /* current byte              */
+			0,            /* position in current byte  */
+			0,            /* current bit count         */
+			bs->bit_count /* bit capactity             */
+		);
+	}
+
+	return tree;
 }

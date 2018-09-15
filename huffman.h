@@ -40,6 +40,11 @@ struct hc_bitstring {
 };
 
 /**
+ * Creates a new Huffman leaf node
+ */
+hc_node* hc_create_node();
+
+/**
  * Creates an empty list of hc_nodes.
  *
  * Returns:
@@ -171,7 +176,7 @@ void hc_print_bitstring(hc_bitstring*);
  * Returns:
  *   hc_bitstring - a bit string containing the encoded data
  */
-hc_bitstring* hc_prepare_output(FILE*, hc_sym*, unsigned long);
+hc_bitstring* hc_prepare_output(FILE*, hc_sym*, hc_ulong);
 
 /**
  * Writes a bit code dictionary to a file
@@ -181,17 +186,39 @@ hc_bitstring* hc_prepare_output(FILE*, hc_sym*, unsigned long);
  *   hc_sym - the bit code dictionary
  *   unsigned long - the number of elements in the bit code dictionary
  */
-void hc_write_table(FILE*, hc_sym*, unsigned long);
+void hc_write_table(FILE*, hc_sym*, hc_ulong);
 
 /**
  * Reads a bit code dictionary from a file
  *
  * Params:
  *   FILE - the input file
+ *   size_t - reference to the length of the returned dictionary
  *
  * Returns:
  *   hc_sym - the bit code dictionary
  */
-hc_sym* hc_read_table(FILE*);
+hc_sym* hc_read_table(FILE*, size_t*);
+
+/**
+ * Writes a bit string containing encoded data to a file
+ *
+ * Params:
+ *   FILE - the output file
+ *   hc_bitstring - the bit string to write
+ */
+void hc_write_data(FILE*, hc_bitstring*);
+
+/**
+ * Reconstructs a Huffman tree from a bit code dictionary
+ *
+ * Params:
+ *   hc_sym - the bit code dictionary
+ *
+ * Returns:
+ *   hc_node_list - a Huffman tree
+ *   hc_ulong - the number of elements in the dictionary
+ */
+hc_node_list* hc_reconstruct_tree(hc_sym*, hc_ulong);
 
 #endif
