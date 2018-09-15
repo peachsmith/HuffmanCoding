@@ -257,7 +257,7 @@ static void hc_print_node(hc_node* node, hc_ulong level)
 
 	if (node->sym.w < 1)
 	{
-		printf("[%4d] n=%d, code=", node->sym.b, node->sym.n);
+		printf("[%4d] n=%d, code=", node->sym.b, level);
 		hc_print_bitstring(node->sym.code);
 		printf("\n");
 	}
@@ -660,7 +660,7 @@ void hc_decode_bitstring(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
 	hc_ulong bit = 0;
 	hc_ulong i;
 
-	for (i = 0; i < bs->bit_count; i++)
+	for (i = 0; i <= bs->bit_count; i++)
 	{
 		if (bit == CHAR_BIT)
 		{
@@ -672,6 +672,7 @@ void hc_decode_bitstring(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
 		{
 			fwrite(&(leaf->sym.b), sizeof(hc_byte), 1, out_stream);
 			leaf = root;
+			i--;
 		}
 		else
 		{
