@@ -23,12 +23,18 @@ int main(int argc, char** argv)
 		data[i].n = 1;
 	}
 
-	const char* default_file = "test.txt";
+	const char* default_file = "hello.png";
 	const char* file_name = default_file;
+	const char* out_name = "mot.png";
 
 	if (argc == 2)
 	{
 		file_name = argv[1];
+	}
+	else if (argc == 3)
+	{
+		file_name = argv[1];
+		out_name = argv[2];
 	}
 
 	input = fopen(file_name, "rb");
@@ -175,7 +181,7 @@ int main(int argc, char** argv)
 
 	if (new_tree != NULL)
 	{
-		hc_print_tree(new_tree);	
+		hc_print_tree(new_tree);
 	}
 
 	hc_bitstring* new_data = hc_read_data(input);
@@ -183,13 +189,27 @@ int main(int argc, char** argv)
 	hc_print_bitstring(new_data);
 	printf("\n");
 
-	hc_decode_bitstring(new_data, new_tree, stdout);
+	/* hc_decode_bitstring(new_data, new_tree, stdout); */
+
+	fclose(input);
+
+	if (out_name != NULL)
+	{
+		out_file = fopen(out_name, "wb");
+		if (out_file == NULL)
+		{
+			printf("error while opening output file\n");
+			free(table);
+			hc_destroy_list(tree);
+			return 1;
+		}
+		hc_decode_bitstring(new_data, new_tree, out_file);
+	}
 
 	hc_destroy_bitstring(new_data);
 
 	hc_destroy_list(new_tree);
 
-	fclose(input);
 	free(table);
 	hc_destroy_list(tree);
 

@@ -468,24 +468,20 @@ hc_sym* hc_read_table(FILE *in_stream, size_t *len)
 
 	hc_sym sym;
 
-	while (flag == 1)
+	while (flag > 0)
 	{
 		flag = fread(&b, sizeof(hc_byte), 1, in_stream);
 
 		if (b == table_byte)
 		{
 			flag = fread(&b, sizeof(hc_byte), 1, in_stream);
-			if (b == 101)
-			{
-				int x = 0;
-			}
 			sym.b = b;
 		}
 		else if (b == table_code)
 		{
 			sym.code = hc_create_bitstring();
 
-			/* dispose of this since we create it later */
+			/* destroy the bytes since we'll recreate them later */
 			free(sym.code->bytes);
 
 			flag = fread(&ul, sizeof(hc_ulong), 1, in_stream);
