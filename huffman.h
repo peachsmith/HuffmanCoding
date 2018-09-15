@@ -91,7 +91,7 @@ void hc_sort_leaves(hc_node_list*);
  * Params:
  *   hc_node_list - a reference to a list of hc_nodes
  */
-void hc_build_tree(hc_node_list*);
+void hc_construct_tree(hc_node_list*);
 
 /**
  * Traverses a tree of hc_nodes and assigns codes;
@@ -176,7 +176,7 @@ void hc_print_bitstring(hc_bitstring*);
  * Returns:
  *   hc_bitstring - a bit string containing the encoded data
  */
-hc_bitstring* hc_prepare_output(FILE*, hc_sym*, hc_ulong);
+hc_bitstring* hc_encode_data(FILE*, hc_sym*, hc_ulong);
 
 /**
  * Writes a bit code dictionary to a file
@@ -240,6 +240,30 @@ hc_node_list* hc_reconstruct_tree(hc_sym*, hc_ulong);
  *   hc_node_list - the Huffman tree
  *   FILE - the output stream
  */
-void hc_decode_bitstring(hc_bitstring*, hc_node_list*, FILE*);
+void hc_decode_data(hc_bitstring*, hc_node_list*, FILE*);
+
+/**
+ * Encodes data using Huffman coding
+ *
+ * Params:
+ *   FILE - the input stream
+ *   FILE - the output stream
+ *
+ * Returns:
+ *   int - an integer indicating succes (0 for failure, 1 for success)
+ */
+int hc_encode_file(FILE*, FILE*);
+
+/**
+ * Decodes data that was encoded with Huffman coding
+ *
+ * Params:
+ *   FILE - the input stream
+ *   FILE - the output stream
+ *
+ * Returns:
+ *   int - an integer indicating succes (0 for failure, 1 for success)
+ */
+int hc_decode_file(FILE*, FILE*);
 
 #endif

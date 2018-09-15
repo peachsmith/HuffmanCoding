@@ -114,7 +114,7 @@ void hc_sort_leaves(hc_node_list* list)
 	}
 }
 
-void hc_build_tree(hc_node_list* list)
+void hc_construct_tree(hc_node_list* list)
 {
 	int built = 0;
 	while (!built)
@@ -383,7 +383,7 @@ void hc_print_bitstring(hc_bitstring* bs)
 	}
 }
 
-hc_bitstring* hc_prepare_output(FILE* input, hc_sym* table, hc_ulong len)
+hc_bitstring* hc_encode_data(FILE* input, hc_sym* table, hc_ulong len)
 {
 	hc_bitstring* bs = hc_create_bitstring();
 
@@ -397,14 +397,6 @@ hc_bitstring* hc_prepare_output(FILE* input, hc_sym* table, hc_ulong len)
 			if (table[i].b == b)
 				hc_add_bits(bs, table[i].code);
 		}
-	}
-
-	if (ferror(input))
-	{
-		printf("error while reading from file\n");
-		fclose(input);
-		hc_destroy_bitstring(bs);
-		return NULL;
 	}
 
 	return bs;
@@ -647,7 +639,7 @@ hc_node_list* hc_reconstruct_tree(hc_sym* table, hc_ulong len)
 	return tree;
 }
 
-void hc_decode_bitstring(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
+void hc_decode_data(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
 {
 	hc_node* root = tree->nodes;
 	hc_node* leaf = root;
@@ -682,4 +674,143 @@ void hc_decode_bitstring(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
 			}
 		}
 	}
+}
+
+int hc_encode_file(FILE *in_stream, FILE *out_stream)
+{
+	hc_ulong unique;
+	hc_ulong i;
+	hc_ulong j;
+	hc_byte b;
+
+	hc_sym data[UCHAR_MAX + 1];
+	hc_sym* dict;
+	hc_node_list* tree;
+	hc_bitstring* enc;
+
+	for (i = 0; i < UCHAR_MAX + 1; i++)
+	{
+		data[i].b = (hc_byte)i;
+		data[i].f = 0;
+		data[i].w = 0;
+		data[i].n = 1;
+	}
+
+	/* read the data from the input stream */
+	unique = 0;
+	while (fread(&b, 1, 1, in_stream) == 1)
+	{
+		if (data[b].f == 0)
+		{
+			unique++;
+			data[b].code = hc_create_bitstring();
+		}
+		data[b].f++;
+	}
+
+	fseek(in_stream, 0, SEEK_SET);
+
+	tree = hc_create_list();
+
+	/* create a leaf node for each unique byte */
+	for (i = 0, j = 0; i < UCHAR_MAX + 1; i++)
+	{
+		if (data[i].f > 0)
+		{
+			/*
+			 * nodes created here will be destroyed when
+			 * the tree is destroyed.
+			 */
+			hc_node *node = malloc(sizeof(hc_node));
+			node->next = NULL;
+			node->leaf_1 = NULL;
+			node->leaf_2 = NULL;
+			node->sym = data[i];
+			hc_add_node(tree, node);
+			j++;
+		}
+	}
+
+	/* sort the leave by frequency */
+	hc_sort_leaves(tree);
+
+	/* construct the tree */
+	hc_construct_tree(tree);
+
+	/* assign bit codes to the leaves */
+	hc_assign_codes(tree);
+
+	/* populate the bit code dictionary with bit codes */
+	dict = (hc_sym*)malloc(sizeof(hc_sym) * unique);
+	for (i = 0, j = 0; i < UCHAR_MAX + 1; i++)
+	{
+		if (data[i].f > 0)
+		{
+			dict[j].b = data[i].b;
+			dict[j].f = data[i].f;
+			dict[j].n = data[i].n;
+			dict[j++].code = data[i].code;
+		}
+	}
+
+	/* write the bit code dictionary to the output stream */
+	hc_write_table(out_stream, dict, unique);
+
+	if (ferror(out_stream))
+	{
+		hc_destroy_list(tree);
+		return 0;
+	}
+
+	/* encode the data from the input stream */
+	enc = hc_encode_data(in_stream, dict, unique);
+
+	if (ferror(in_stream))
+	{
+		hc_destroy_list(tree);
+		hc_destroy_bitstring(enc);
+		return 0;
+	}
+
+	/* write the encoded data to the output stream */
+	hc_write_data(out_stream, enc);
+
+	hc_destroy_list(tree);
+	hc_destroy_bitstring(enc);
+
+	return 1;
+}
+
+int hc_decode_file(FILE *in_stream, FILE *out_stream)
+{
+	size_t len;
+	hc_sym* dict;
+	hc_node_list* tree;
+	hc_bitstring* enc;
+
+	/* read the bit code dictionary from the input stream */
+	dict = hc_read_table(in_stream, &len);
+
+	/* reconstruct the tree from the bit code dictionary */
+	tree = hc_reconstruct_tree(dict, len);
+
+	/* read the encoded data from the input stream */
+	enc = hc_read_data(in_stream);
+
+	if (ferror(in_stream))
+	{
+		hc_destroy_list(tree);
+		return 0;
+	}
+
+	/* decode the bit string and write to the output stream */
+	hc_decode_data(enc, tree, out_stream);
+
+	hc_destroy_bitstring(enc);
+	hc_destroy_list(tree);
+
+	if (ferror(out_stream))
+		return 0;
+
+	return 1;
 }
