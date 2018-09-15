@@ -232,4 +232,14 @@ hc_bitstring* hc_read_data(FILE*);
  */
 hc_node_list* hc_reconstruct_tree(hc_sym*, hc_ulong);
 
+/**
+ * Decodes a bit string and writes the output to a file
+ *
+ * Params:
+ *   hc_bitstring - the data to decode
+ *   hc_node_list - the Huffman tree
+ *   FILE - the output stream
+ */
+void hc_decode_bitstring(hc_bitstring*, hc_node_list*, FILE*);
+
 #endif

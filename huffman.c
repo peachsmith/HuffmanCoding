@@ -650,3 +650,39 @@ hc_node_list* hc_reconstruct_tree(hc_sym* table, hc_ulong len)
 
 	return tree;
 }
+
+void hc_decode_bitstring(hc_bitstring *bs, hc_node_list *tree, FILE *out_stream)
+{
+	hc_node* root = tree->nodes;
+	hc_node* leaf = root;
+
+	hc_ulong byte = 0;
+	hc_ulong bit = 0;
+	hc_ulong i;
+
+	for (i = 0; i < bs->bit_count; i++)
+	{
+		if (bit == CHAR_BIT)
+		{
+			byte++;
+			bit = 0;
+		}
+
+		if (leaf->sym.w == 0)
+		{
+			fwrite(&(leaf->sym.b), sizeof(hc_byte), 1, out_stream);
+			leaf = root;
+		}
+		else
+		{
+			if (bs->bytes[byte] & (1 << bit++))
+			{
+				leaf = leaf->leaf_1;
+			}
+			else
+			{
+				leaf = leaf->leaf_2;
+			}
+		}
+	}
+}

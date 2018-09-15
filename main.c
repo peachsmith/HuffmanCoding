@@ -175,8 +175,7 @@ int main(int argc, char** argv)
 
 	if (new_tree != NULL)
 	{
-		hc_print_tree(new_tree);
-		hc_destroy_list(new_tree);
+		hc_print_tree(new_tree);	
 	}
 
 	hc_bitstring* new_data = hc_read_data(input);
@@ -184,7 +183,11 @@ int main(int argc, char** argv)
 	hc_print_bitstring(new_data);
 	printf("\n");
 
+	hc_decode_bitstring(new_data, new_tree, stdout);
+
 	hc_destroy_bitstring(new_data);
+
+	hc_destroy_list(new_tree);
 
 	fclose(input);
 	free(table);
