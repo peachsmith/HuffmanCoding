@@ -2,6 +2,7 @@
 #define HUFFMAN_H
 
 #include <stdio.h>
+#include <limits.h>
 
 typedef unsigned char hc_byte;
 typedef unsigned long hc_ulong;

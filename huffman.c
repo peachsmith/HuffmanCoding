@@ -238,7 +238,7 @@ void hc_print_list(hc_node_list* list)
 	hc_node* n = list->nodes;
 	while (n != NULL)
 	{
-		printf("| %4d | %10d    |\n", n->sym.b, n->sym.f);
+		printf("| %4d | %10ld    |\n", n->sym.b, n->sym.f);
 		n = n->next;
 	}
 
@@ -257,12 +257,12 @@ static void hc_print_node(hc_node* node, hc_ulong level)
 
 	if (node->sym.w < 1)
 	{
-		printf("[%4d] n=%d, code=", node->sym.b, level);
+		printf("[%4d] n=%ld, code=", node->sym.b, level);
 		hc_print_bitstring(node->sym.code);
 		printf("\n");
 	}
 	else
-		printf("(branch) n=%d\n", level);
+		printf("(branch) n=%ld\n", level);
 
 	if (node->leaf_1 != NULL)
 		hc_print_node(node->leaf_1, level + 1);
