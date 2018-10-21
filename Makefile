@@ -1,2 +1,3 @@
 all:
-	gcc main.c huffman.c -o huffman
+	gcc main.c huffman.c -o hcode
+
